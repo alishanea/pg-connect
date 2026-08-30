@@ -1,0 +1,20 @@
+{
+  "name": "pg-connect",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Community and grievance-management web application for PG residents and owners",
+  "workspaces": [
+    "apps/api",
+    "apps/web"
+  ],
+  "scripts": {
+    "dev:api": "npm run dev --workspace=apps/api",
+    "dev:web": "npm run dev --workspace=apps/web",
+    "build:api": "npm run build --workspace=apps/api",
+    "build:web": "npm run build --workspace=apps/web",
+    "test:api": "npm run test --workspace=apps/api",
+    "test:web": "npm run test --workspace=apps/web",
+    "test": "npm run test:api && npm run test:web",
+    "build": "npm run build:api && npm run build:web"
+  }
+}

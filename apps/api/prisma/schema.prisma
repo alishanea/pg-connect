@@ -1,0 +1,112 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model PG {
+  id            String         @id @default(uuid())
+  name          String
+  address       String
+  ownerId       String
+  createdAt     DateTime       @default(now())
+  rooms         Room[]
+  users         User[]
+  grievances    Grievance[]
+  announcements Announcement[]
+  inviteCodes   InviteCode[]
+}
+
+model Room {
+  id         String      @id @default(uuid())
+  pgId       String
+  roomNumber String
+  capacity   Int
+  pg         PG          @relation(fields: [pgId], references: [id], onDelete: Cascade)
+  users      User[]
+  grievances Grievance[]
+}
+
+model User {
+  id                 String             @id @default(uuid())
+  name               String
+  email              String             @unique
+  passwordHash       String
+  role               String             @default("RESIDENT")
+  pgId               String?
+  roomId             String?
+  createdAt          DateTime           @default(now())
+  pg                 PG?                @relation(fields: [pgId], references: [id], onDelete: SetNull)
+  room               Room?              @relation(fields: [roomId], references: [id], onDelete: SetNull)
+  raisedGrievances   Grievance[]        @relation("RaisedBy")
+  assignedGrievances Grievance[]        @relation("AssignedTo")
+  comments           GrievanceComment[]
+  announcements      Announcement[]
+  notifications      Notification[]
+}
+
+model Grievance {
+  id               String             @id @default(uuid())
+  pgId             String
+  roomId           String?
+  raisedByUserId   String
+  assignedToUserId String?
+  title            String
+  description      String
+  category         String
+  status           String             @default("OPEN")
+  photoUrl         String?
+  createdAt        DateTime           @default(now())
+  resolvedAt       DateTime?
+  pg               PG                 @relation(fields: [pgId], references: [id], onDelete: Cascade)
+  room             Room?              @relation(fields: [roomId], references: [id], onDelete: SetNull)
+  raisedByUser     User               @relation("RaisedBy", fields: [raisedByUserId], references: [id], onDelete: Cascade)
+  assignedToUser   User?              @relation("AssignedTo", fields: [assignedToUserId], references: [id], onDelete: SetNull)
+  comments         GrievanceComment[]
+}
+
+model GrievanceComment {
+  id           String    @id @default(uuid())
+  grievanceId  String
+  authorUserId String
+  body         String
+  createdAt    DateTime  @default(now())
+  grievance    Grievance @relation(fields: [grievanceId], references: [id], onDelete: Cascade)
+  author       User      @relation(fields: [authorUserId], references: [id], onDelete: Cascade)
+}
+
+model Announcement {
+  id           String   @id @default(uuid())
+  pgId         String
+  authorUserId String
+  title        String
+  body         String
+  createdAt    DateTime @default(now())
+  pg           PG       @relation(fields: [pgId], references: [id], onDelete: Cascade)
+  author       User     @relation(fields: [authorUserId], references: [id], onDelete: Cascade)
+}
+
+model Notification {
+  id                 String   @id @default(uuid())
+  userId             String
+  type               String
+  message            String
+  isRead             Boolean  @default(false)
+  relatedGrievanceId String?
+  createdAt          DateTime @default(now())
+  user               User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model InviteCode {
+  id          String    @id @default(uuid())
+  pgId        String
+  code        String    @unique
+  roleGranted String    @default("RESIDENT")
+  used        Boolean   @default(false)
+  expiresAt   DateTime?
+  createdAt   DateTime  @default(now())
+  pg          PG        @relation(fields: [pgId], references: [id], onDelete: Cascade)
+}
